@@ -1,0 +1,26 @@
+# config/config.yaml
+# Paramètres principaux (tu peux les modifier selon tes hypothèses)
+
+paths:
+  # Chemin relatif depuis la racine du repo
+  analytics_yaml: data/2025-FluidTopics-daily-analytics.yaml
+
+simulation:
+  # Taille moyenne d'un topic (caractères)
+  topic_size_chars: 2000
+
+  # Taille moyenne d'un prompt (caractères)
+  prompt_size_chars: 400
+
+  # Chatbot : nombre moyen de topics injectés
+  chatbot_avg_topics: 10
+
+  # Chatbot : nombre moyen de prompts (turns) par conversation
+  chatbot_avg_prompts: 2
+
+  # Sortie moyenne (tokens) pour completion/chatbot (méthodo ~300)
+  output_tokens_avg: 300
+
+carbon:
+  # Intensité carbone moyenne (gCO2e/kWh) — adapte à ta région / hypothèse
+  carbon_intensity_g_per_kwh: 250

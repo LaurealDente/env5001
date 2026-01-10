@@ -1,0 +1,7 @@
+# config/config_model.yaml
+# Optionnel dans cette version : placeholder pour modéliser plusieurs providers/modèles.
+# Tu peux l'étendre si l'encadrant veut des valeurs différentes selon provider (OpenAI/Azure/DeepL/etc.)
+
+models:
+  default:
+    notes: "Version simplifiée basée sur la méthodologie fusionnée."
