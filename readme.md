@@ -1,6 +1,6 @@
 # ENV5001 – Estimation de l’impact énergétique et carbone de l’IA
 
-## 🎯 Objectif
+## Objectif
 
 Ce projet estime l’**impact énergétique (kWh)** et **carbone (CO₂)** de l’usage de l’IA générative dans **Fluid Topics**, à partir de **données d’analytics réelles**.
 
@@ -12,7 +12,7 @@ Ce projet estime l’**impact énergétique (kWh)** et **carbone (CO₂)** de l�
 
 ---
 
-## 📦 Fonctionnalités
+## Fonctionnalités
 
 - Profils IA : **Chatbot**, **Completion**, **Translation**
 - Calculs par jour et par période
@@ -22,7 +22,7 @@ Ce projet estime l’**impact énergétique (kWh)** et **carbone (CO₂)** de l�
 
 ---
 
-## 📁 Structure
+## Structure
 
 env5001-main/
 ├── api.py # API + interface web (/ui)
@@ -39,7 +39,7 @@ Copier le code
 
 ---
 
-## 🚀 Lancer le projet
+## Lancer le projet
 
 ### Installation
 ```bash
@@ -54,7 +54,7 @@ Interface web : http://127.0.0.1:8000/ui
 
 Docs API : http://127.0.0.1:8000/docs
 
-🖥️ Interface web
+Interface web
 Sélection de période
 
 Cartes KPI (Tokens, Énergie, CO₂)
@@ -65,13 +65,13 @@ Tableau détaillé
 
 Export JSON
 
-🧪 CLI
+CLI
 bash
 Copier le code
 python interface.py summary
 python interface.py daily 2025-08-12
 python interface.py range 2025-08-12 2025-08-31
-🔧 Configuration
+Configuration
 Les hypothèses (taille des contenus, intensité carbone, etc.) sont définies dans :
 
 arduino
@@ -79,7 +79,7 @@ Copier le code
 config/config.yaml
 Toute modification est automatiquement prise en compte.
 
-📐 Méthodologie
+Méthodologie
 Les calculs suivent une méthodologie documentée, basée sur :
 
 conversion caractères → tokens

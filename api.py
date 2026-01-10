@@ -8,7 +8,7 @@ API FastAPI :
 - /summary
 - /daily/{date}
 - /range?start=YYYY-MM-DD&end=YYYY-MM-DD
-+ /ui (petit dashboard élégant)
++ /ui (dashboard léger)
 """
 
 from __future__ import annotations
@@ -23,11 +23,11 @@ from traitement import load_config, compute_daily, compute_summary, filter_range
 APP_ROOT = Path(__file__).resolve().parent
 CONFIG_PATH = APP_ROOT / "config" / "config.yaml"
 
-app = FastAPI(title="ENV5001 – Energy Estimator", version="1.1.0")
+app = FastAPI(title="ENV5001 – Energy Estimator", version="1.1.1")
 
 
 # -----------------------------
-# API endpoints (inchangés)
+# API endpoints
 # -----------------------------
 
 @app.get("/health")
@@ -59,7 +59,7 @@ def daily(date: str):
     results = compute_daily(cfg)
 
     for day in results["days"]:
-        if day["date"] == date:
+        if day.get("date") == date:
             return day
 
     raise HTTPException(status_code=404, detail=f"Date inconnue: {date}")
@@ -81,19 +81,16 @@ def range_endpoint(
 
 
 # -----------------------------
-# UI (amélioration rapide)
+# UI
 # -----------------------------
 
 @app.get("/", include_in_schema=False)
 def root():
-    # Petit confort : ouvrir directement l’UI
     return RedirectResponse(url="/ui")
 
 
 @app.get("/ui", response_class=HTMLResponse, include_in_schema=False)
 def ui():
-    # UI 100% statique (HTML+JS) qui consomme /range
-    # -> aucune dépendance front à installer
     return HTMLResponse(
         """
 <!doctype html>
@@ -106,8 +103,6 @@ def ui():
   <style>
     :root{
       --bg: #0b1020;
-      --card: rgba(255,255,255,.06);
-      --card2: rgba(255,255,255,.08);
       --text: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.65);
       --line: rgba(255,255,255,.12);
@@ -124,10 +119,7 @@ def ui():
       color: var(--text);
     }
     .container { max-width: 1100px; margin: 0 auto; }
-    .header {
-      display:flex; justify-content:space-between; align-items:flex-end;
-      gap: 12px; margin-bottom: 16px;
-    }
+    .header { display:flex; justify-content:space-between; align-items:flex-end; gap: 12px; margin-bottom: 16px; }
     h1 { font-size: 22px; margin: 0; letter-spacing: .2px; }
     .sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
     .pill {
@@ -136,7 +128,6 @@ def ui():
       background: rgba(255,255,255,.04); border-radius: 999px;
       color: var(--muted); font-size: 12px;
     }
-
     .panel {
       border: 1px solid var(--line);
       background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
@@ -144,11 +135,7 @@ def ui():
       box-shadow: var(--shadow);
       padding: 14px;
     }
-
-    .controls {
-      display:flex; flex-wrap:wrap; gap:10px; align-items:end;
-      margin-bottom: 12px;
-    }
+    .controls { display:flex; flex-wrap:wrap; gap:10px; align-items:end; margin-bottom: 12px; }
     label { display:flex; flex-direction:column; gap:6px; font-size:12px; color: var(--muted); }
     input[type="date"]{
       padding: 8px 10px; border-radius: 12px; border:1px solid var(--line);
@@ -165,18 +152,10 @@ def ui():
     button:hover { background: rgba(255,255,255,.12); }
     button:active { transform: translateY(1px); }
 
-    .grid {
-      display:grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 10px;
-    }
-    @media (max-width: 980px){
-      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media (max-width: 520px){
-      .grid { grid-template-columns: 1fr; }
-    }
+    .grid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+    @media (max-width: 980px){ .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 520px){ .grid { grid-template-columns: 1fr; } }
+
     .card {
       border: 1px solid var(--line);
       background: rgba(255,255,255,.06);
@@ -187,23 +166,11 @@ def ui():
     .kpiValue { font-size: 22px; font-weight: 750; margin-top: 6px; }
     .kpiHint  { color: var(--muted); font-size: 12px; margin-top: 6px; }
 
-    .split {
-      display:grid;
-      grid-template-columns: 1.4fr .6fr;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    @media (max-width: 980px){
-      .split { grid-template-columns: 1fr; }
-    }
+    .split { display:grid; grid-template-columns: 1.4fr .6fr; gap: 10px; margin-top: 10px; }
+    @media (max-width: 980px){ .split { grid-template-columns: 1fr; } }
 
     .tableWrap { overflow:auto; border-radius: var(--radius); border:1px solid var(--line); }
-    table {
-      width:100%;
-      border-collapse: collapse;
-      font-size: 13px;
-      background: rgba(255,255,255,.04);
-    }
+    table { width:100%; border-collapse: collapse; font-size: 13px; background: rgba(255,255,255,.04); }
     th, td { padding: 10px 10px; border-bottom: 1px solid var(--line); }
     th { text-align:left; color: var(--muted); font-weight: 600; background: rgba(255,255,255,.05); }
     tr:hover td { background: rgba(255,255,255,.04); }
@@ -211,8 +178,7 @@ def ui():
 
     .msg { color: var(--muted); font-size: 13px; margin-top: 6px; }
     pre {
-      margin: 0;
-      padding: 12px;
+      margin: 0; padding: 12px;
       border: 1px solid var(--line);
       border-radius: var(--radius);
       background: rgba(255,255,255,.04);
@@ -231,7 +197,7 @@ def ui():
         <h1>ENV5001 — Estimation Tokens / Énergie / CO₂</h1>
         <div class="sub">Dashboard léger branché sur <span class="pill">/range</span> (aucun build front)</div>
       </div>
-      <div class="pill" id="status">⏳ prêt</div>
+      <div class="pill" id="status"> prêt</div>
     </div>
 
     <div class="panel">
@@ -263,7 +229,7 @@ def ui():
         <div class="card">
           <div class="kpiTitle">CO₂ (kg)</div>
           <div class="kpiValue" id="kpiCo2">—</div>
-          <div class="kpiHint">Σ sur la période</div>
+          <div class="kpiHint">Σ sur la période (conversion g→kg auto)</div>
         </div>
         <div class="card">
           <div class="kpiTitle">Jours</div>
@@ -321,29 +287,35 @@ def ui():
   const fmtInt = (x) => (x ?? 0).toLocaleString("fr-FR");
   const fmt2 = (x) => (x ?? 0).toLocaleString("fr-FR", { maximumFractionDigits: 2 });
 
-  // Selon ta sortie compute_summary / compute_daily, ces clés peuvent varier.
-  // On “normalise” pour que l’UI reste robuste.
-  function pick(obj, keys, fallback=0){
+  function pick(obj, keys, fallback=null){
     for (const k of keys){
       if (obj && obj[k] !== undefined && obj[k] !== null) return obj[k];
     }
     return fallback;
   }
 
+  // Correction 1 : g → kg auto (pour summary)
   function normalizeSummary(obj){
+    const co2kg = pick(obj, ["co2_kg_total","co2_kg","co2"]);
+    const co2g  = pick(obj, ["co2_g_total","co2_g"]);
+
     return {
-      tokens: pick(obj, ["tokens_total","tokens","total_tokens"]),
-      energy: pick(obj, ["energy_kwh_total","energy_kwh","energy"]),
-      co2: pick(obj, ["co2_kg_total","co2_kg","co2"]),
+      tokens: pick(obj, ["tokens_total","tokens","total_tokens"], 0) ?? 0,
+      energy: pick(obj, ["energy_kwh_total","energy_kwh","energy"], 0) ?? 0,
+      co2: (co2kg !== null) ? co2kg : ((co2g !== null) ? (co2g / 1000) : 0),
     };
   }
 
+  // Correction 2 : g → kg auto (pour days)
   function normalizeDay(d){
+    const co2kg = pick(d, ["co2_kg_total","co2_kg","co2"]);
+    const co2g  = pick(d, ["co2_g_total","co2_g"]);
+
     return {
-      date: pick(d, ["date","day"], ""),
-      tokens: pick(d, ["tokens_total","tokens","total_tokens"]),
-      energy: pick(d, ["energy_kwh_total","energy_kwh","energy"]),
-      co2: pick(d, ["co2_kg_total","co2_kg","co2"]),
+      date: pick(d, ["date","day"], "") ?? "",
+      tokens: pick(d, ["tokens_total","tokens","total_tokens"], 0) ?? 0,
+      energy: pick(d, ["energy_kwh_total","energy_kwh","energy"], 0) ?? 0,
+      co2: (co2kg !== null) ? co2kg : ((co2g !== null) ? (co2g / 1000) : 0),
     };
   }
 
@@ -357,14 +329,15 @@ def ui():
     const ctx = document.getElementById("chart").getContext("2d");
     if (chart) chart.destroy();
 
+    // Correction 3 : échelle stable même avec 1 point
     chart = new Chart(ctx, {
       type: "line",
       data: {
         labels,
         datasets: [
-          { label: "Tokens", data: tokens, yAxisID: "yTokens", tension: 0.25 },
-          { label: "Énergie (kWh)", data: energy, yAxisID: "yEnergy", tension: 0.25 },
-          { label: "CO₂ (kg)", data: co2, yAxisID: "yCo2", tension: 0.25 },
+          { label: "Tokens", data: tokens, borderWidth: 2, tension: 0.25 },
+          { label: "Énergie (kWh)", data: energy, borderWidth: 2, tension: 0.25 },
+          { label: "CO₂ (kg)", data: co2, borderWidth: 2, tension: 0.25 },
         ]
       },
       options: {
@@ -376,9 +349,7 @@ def ui():
         },
         scales: {
           x: { ticks: { color: "rgba(255,255,255,.65)" }, grid: { color: "rgba(255,255,255,.08)" } },
-          yTokens: { position: "left", ticks:{ color:"rgba(255,255,255,.65)" }, grid:{ color:"rgba(255,255,255,.08)" } },
-          yEnergy: { position: "right", grid: { drawOnChartArea: false }, ticks:{ color:"rgba(255,255,255,.65)" } },
-          yCo2:   { position: "right", grid: { drawOnChartArea: false }, ticks:{ color:"rgba(255,255,255,.65)" } }
+          y: { beginAtZero: true, ticks: { color: "rgba(255,255,255,.65)" }, grid: { color: "rgba(255,255,255,.08)" } }
         }
       }
     });
@@ -409,7 +380,7 @@ def ui():
       return;
     }
 
-    setStatus("⏳ chargement…");
+    setStatus("chargement…");
     try{
       const r = await fetch(`/range?start=${start}&end=${end}`);
       if (!r.ok) throw new Error("Erreur API /range");
@@ -428,10 +399,10 @@ def ui():
       if (days.length) renderChart(days);
       renderTable(days);
 
-      setStatus("✅ OK");
+      setStatus("OK");
     } catch(e){
       console.error(e);
-      setStatus("❌ erreur");
+      setStatus("erreur");
       alert("Impossible de charger les données. Vérifie que l'API /range fonctionne.");
     }
   }
@@ -462,9 +433,6 @@ def ui():
     URL.revokeObjectURL(url);
   });
 
-  // Petit preset dates (si tu veux)
-  // -> par défaut, met aujourd'hui / aujourd'hui, mais tu peux choisir toi-même.
-  // Ici on met la date du jour dans les inputs si vides.
   (function init(){
     const s = document.getElementById("start");
     const e = document.getElementById("end");
