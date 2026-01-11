@@ -1,0 +1,29 @@
+# config/config.yaml
+
+paths:
+  data_dir: "data"
+  analytics_file: "2025-FluidTopics-daily-analytics.yaml"
+  output_dir: "outputs"
+
+regions:
+  france:
+    country: "FR"
+    pue: 1.3
+    carbon_intensity_g_per_kwh: 60
+
+  germany:
+    country: "DE"
+    pue: 1.25
+    carbon_intensity_g_per_kwh: 140
+
+  iceland:
+    country: "IS"
+    pue: 1.15
+    carbon_intensity_g_per_kwh: 5
+
+  usa:
+    country: "US"
+    pue: 1.3
+    carbon_intensity_g_per_kwh: 380
+
+default_region: "france"
