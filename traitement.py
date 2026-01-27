@@ -1,26 +1,44 @@
 import yaml
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
 
 
 # =========================
-# Chargement YAML
+# Chargement YAML / Configs
 # =========================
 
 def load_yaml(path: Path) -> Dict[str, Any]:
+    """Charge un fichier YAML local (config)."""
     with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        data = yaml.safe_load(f)
+    if not isinstance(data, dict):
+        raise ValueError(f"Le YAML {path} doit être un mapping (dict) au top-level.")
+    return data
 
 
-def load_configs():
+def load_configs() -> tuple[Dict[str, Any], Dict[str, Any]]:
+    """Charge config générale + config modèles."""
     config = load_yaml(Path("config/config.yaml"))
     config_model = load_yaml(Path("config/config_model.yaml"))
     return config, config_model
 
 
-def load_analytics(config: Dict[str, Any]) -> Dict[str, Any]:
+def load_analytics_from_disk(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Charge le fichier analytics depuis data/ (mode local)."""
     data_path = Path(config["paths"]["data_dir"]) / config["paths"]["analytics_file"]
-    return load_yaml(data_path)
+    with open(data_path, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    if not isinstance(data, dict):
+        raise ValueError("Le YAML analytics doit être un mapping (dict) au top-level.")
+    return data
+
+
+def parse_analytics_yaml_str(yaml_text: str) -> Dict[str, Any]:
+    """Parse un YAML analytics fourni en texte (mode API)."""
+    data = yaml.safe_load(yaml_text)
+    if not isinstance(data, dict):
+        raise ValueError("Le YAML analytics doit être un mapping (dict) au top-level.")
+    return data
 
 
 # =========================
@@ -28,30 +46,30 @@ def load_analytics(config: Dict[str, Any]) -> Dict[str, Any]:
 # =========================
 
 def characters_to_tokens(characters: int) -> float:
+    """Approximation: 1 token ~ 4 caractères."""
     return characters / 4.0
 
 
 def compute_inference_time_s(profile: Dict[str, Any]) -> float:
+    """Temps d'inférence en secondes = tokens_totaux / throughput (tokens/s)."""
     tokens_in = characters_to_tokens(profile["input_characters"])
     tokens_out = characters_to_tokens(profile["output_characters"])
-    return (tokens_in + tokens_out) / profile["throughput_tokens_per_s"]
+    total_tokens = tokens_in + tokens_out
+    return total_tokens / profile["throughput_tokens_per_s"]
 
 
-def compute_energy_kwh(
-    power_w: float,
-    time_s: float,
-    eta: float,
-    pue: float
-) -> float:
+def compute_energy_kwh(power_w: float, time_s: float, eta: float, pue: float) -> float:
+    """
+    Énergie (kWh) = (P(W) * t(s) / eta) / 3600 * PUE
+    """
     energy_wh = (power_w * time_s) / eta
-    return (energy_wh / 3600) * pue
+    energy_kwh = energy_wh / 3600
+    return energy_kwh * pue
 
 
-def compute_carbon_gco2e(
-    energy_kwh: float,
-    carbon_intensity: float
-) -> float:
-    return energy_kwh * carbon_intensity
+def compute_carbon_gco2e(energy_kwh: float, carbon_intensity_g_per_kwh: float) -> float:
+    """Carbone (gCO2e) = énergie (kWh) * intensité (g/kWh)."""
+    return energy_kwh * carbon_intensity_g_per_kwh
 
 
 # =========================
@@ -60,25 +78,31 @@ def compute_carbon_gco2e(
 
 def compute_profile(
     profile_key: str,
-    entries: list,
+    entries: List[Dict[str, Any]],
     config: Dict[str, Any],
     config_model: Dict[str, Any],
     region_name: str
 ) -> Dict[str, Any]:
+    """
+    Calcule résultats (daily + totals) pour un profil analytics (ex: chatbots).
+    On mappe chatbots -> chatbot via rstrip('s').
+    """
+    if region_name not in config["regions"]:
+        raise ValueError(f"Région inconnue: {region_name}")
 
     region = config["regions"][region_name]
-    profile_name = profile_key.rstrip("s")  # chatbots → chatbot
+
+    profile_name = profile_key.rstrip("s")  # chatbots -> chatbot
+    if profile_name not in config_model["profiles"]:
+        raise ValueError(f"Profil modèle introuvable dans config_model.yaml: {profile_name}")
+
     profile = config_model["profiles"][profile_name]
     gpu = config_model["hardware"]["gpu"]
 
     time_per_inference = compute_inference_time_s(profile)
 
-    daily_results = {}
-    totals = {
-        "inferences": 0,
-        "energy_kwh": 0.0,
-        "carbon_gco2e": 0.0
-    }
+    daily_results: Dict[str, Any] = {}
+    totals = {"inferences": 0, "energy_kwh": 0.0, "carbon_gco2e": 0.0}
 
     for entry in entries:
         date = entry["date"]
@@ -93,7 +117,7 @@ def compute_profile(
 
         carbon = compute_carbon_gco2e(
             energy_kwh=energy,
-            carbon_intensity=region["carbon_intensity_g_per_kwh"]
+            carbon_intensity_g_per_kwh=region["carbon_intensity_g_per_kwh"]
         )
 
         daily_results[date] = {
@@ -114,22 +138,28 @@ def compute_profile(
     }
 
 
-def run_energy_calculation(region: str = None) -> Dict[str, Any]:
+def run_energy_calculation_from_analytics_dict(
+    analytics: Dict[str, Any],
+    region: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Mode générique : on passe déjà le dict analytics (API ou autre source).
+    """
     config, config_model = load_configs()
-    analytics = load_analytics(config)
-
     if region is None:
         region = config["default_region"]
 
-    results = {}
+    results: Dict[str, Any] = {}
     genai = analytics.get("genai", {})
 
+    if not isinstance(genai, dict):
+        raise ValueError("La clé 'genai' doit être un mapping (dict).")
+
     for profile_key, entries in genai.items():
-        # --- AJOUT DE LA SÉCURITÉ ICI ---
-        # Si 'entries' n'est pas une liste (ex: la clé 'description'), on l'ignore
+        # Ignore les métadonnées type description: "..."
         if not isinstance(entries, list):
             continue
-            
+
         results[profile_key] = compute_profile(
             profile_key=profile_key,
             entries=entries,
@@ -139,3 +169,23 @@ def run_energy_calculation(region: str = None) -> Dict[str, Any]:
         )
 
     return results
+
+
+def run_energy_calculation_from_yaml_text(
+    yaml_text: str,
+    region: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Mode API : on passe le contenu YAML en texte (body POST).
+    """
+    analytics = parse_analytics_yaml_str(yaml_text)
+    return run_energy_calculation_from_analytics_dict(analytics, region=region)
+
+
+def run_energy_calculation(region: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Mode local (debug) : charge data/2025-FluidTopics-daily-analytics.yaml depuis le disque.
+    """
+    config, _ = load_configs()
+    analytics = load_analytics_from_disk(config)
+    return run_energy_calculation_from_analytics_dict(analytics, region=region)
