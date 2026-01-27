@@ -13,7 +13,7 @@ La méthodologie de calcul repose sur les travaux et hypothèses définis dans l
 ---
 
 ## Structure du projet
-
+```bash
 .
 ├── api.py # API REST (FastAPI)
 ├── interface.py # Interface Python (formatage / librairie)
@@ -22,7 +22,7 @@ La méthodologie de calcul repose sur les travaux et hypothèses définis dans l
 │ ├── config.yaml # Configuration régions / PUE / intensité carbone
 │ └── config_model.yaml # Configuration modèles et paramètres matériels
 └── README.md
-
+```
 
 ---
 
