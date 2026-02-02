@@ -3,29 +3,28 @@
 hardware:
   gpu:
     power_w: 700          # GPU type A100/H100 ordre de grandeur
-    eta: 0.7              # 60–80 % selon HotCarbon
+    eta: 0.85             # 60–80 % selon HotCarbon
   cpu:
-    power_w: 100          # CPU datacenter
-    eta: 0.25             # 20–30 %
+    power_w: 70          # CPU datacenter
+    eta: 0.15             # 20–30 %
 
 profiles:
   chatbot:
     description: "Chatbot conversationnel"
-    input_characters: 75000
-    output_characters: 1200
-    throughput_tokens_per_s: 150
+    throughput_tokens_per_s: 60
     utilization_rate: 1.0
 
   completion:
     description: "Génération simple (completion)"
     input_characters: 2500
     output_characters: 300
-    throughput_tokens_per_s: 200
+    throughput_tokens_per_s: 60
     utilization_rate: 1.0
 
   translation:
     description: "Traduction automatique"
     input_characters: 3000
     output_characters: 3000
-    throughput_tokens_per_s: 300
+    throughput_tokens_per_s: 60
     utilization_rate: 1.0
+
